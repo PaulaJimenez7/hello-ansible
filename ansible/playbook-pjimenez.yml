@@ -1,0 +1,48 @@
+---
+- hosts: localhost
+  tasks:
+
+   - name: Install Apache
+     apt:
+       name: apache2
+       state: latest
+       update_cache: true
+
+   - name: Change Apache port
+     lineinfile:
+       path: /etc/apache2/ports.conf
+       regexp: '^Listen '
+       line: 'Listen 8080'
+
+   - name: Ensure group "devops" exists
+     group:
+       name: devops
+       state: present
+
+   - name: Create user 'pjimenez' and add him to te group devops
+     user:
+       name: pjimenez
+       shell: /bin/bash
+       groups: devops
+       append: yes
+
+   - name: Copy de file pjimenez.txt y his home directory
+     copy:
+       src: ./pjimenez.txt
+       dest: /home/pjimenez
+       owner: pjimenez
+       group: devops
+       node: 0644
+
+   - name: Print uptime/load average and save it into uptime.txt
+     shell: uptime >> uptime.txt
+     args:
+       chdir: /home/pjimenez/
+
+   - name: Using a template
+     vars:
+       env: staging
+     templates:
+       src: ./my_app.conf.j2
+       dest: /etc/my_app.conf
+     become: true            
